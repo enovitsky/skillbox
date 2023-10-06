@@ -1,13 +1,23 @@
 import dill
 import glob
 import json
+import os
 import pandas as pd
 
-#loading training data
-df_train = pd.read_csv('/Users/enovitsky/airflow_hw/data/train/homework.csv')
+from datetime import datetime
 
-#loading testing data
-test_json_files = glob.glob('/Users/enovitsky/airflow_hw/data/test/*.json')
+# Укажем путь к файлам проекта:
+# -> $PROJECT_PATH при запуске в Airflow
+# -> иначе - текущая директория при локальном запуске
+
+# path = os.environ.get('PROJECT_PATH', '.')
+path = '/Users/enovitsky/airflow_hw'
+
+# loading training data
+df_train = pd.read_csv('../data/train/homework.csv')
+
+# loading testing data
+test_json_files = glob.glob('../data/test/*.json')
 df_test = pd.DataFrame()
 for file in test_json_files:
     with open(file, 'r') as json_file:
@@ -20,15 +30,20 @@ for file in test_json_files:
         df_test = pd.concat([df_test, json_df], axis=0, ignore_index=True)
 
 
-def predict():
-    with open('/Users/enovitsky/airflow_hw/data/models/cars_pipe_202310031737.pkl', 'rb') as model_file:
+def get_prediction(df):
+    with open(f'{path}/data/models/cars_pipe_202310061532.pkl', 'rb') as model_file:
         model = dill.load(model_file)
 
-    train_predictions = pd.Series(model.predict(df_train))
-    test_predictions = pd.Series(model.predict(df_test))
+    df['prediction'] = model.predict(df)
+    df = df[['id', 'prediction']]
+    return df
 
-    df_predictions = pd.concat([train_predictions, test_predictions], axis=0, ignore_index=True)
-    df_predictions.to_csv('/Users/enovitsky/airflow_hw/data/predictions/predictions.csv')
+
+def predict():
+    df_train_predictions = get_prediction(df_train)
+    df_test_predictions = get_prediction(df_test)
+    df_predictions = pd.concat([df_train_predictions, df_test_predictions], axis=0, ignore_index=True)
+    df_predictions.to_csv(f'{path}/data/predictions/predictions_{datetime.now().strftime("%Y%m%d%H%M")}.csv', index=False)
 
 
 if __name__ == '__main__':

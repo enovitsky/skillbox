@@ -19,8 +19,8 @@ from sklearn.svm import SVC
 # -> $PROJECT_PATH при запуске в Airflow
 # -> иначе - текущая директория при локальном запуске
 
-path = os.environ.get('PROJECT_PATH', '.')
-# path = '/Users/enovitsky/airflow_hw'
+# path = os.environ.get('PROJECT_PATH', '.')
+path = '/Users/enovitsky/airflow_hw'
 
 
 def filter_data(df: pd.DataFrame) -> pd.DataFrame:
